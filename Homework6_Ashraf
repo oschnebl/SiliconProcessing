@@ -1,0 +1,68 @@
+clear all
+format Long
+imp=input('Please enter the assigned number from as stated  to select the dopant : 1 for As,2 for P,3 for Sb,4 for B, 5 for Al, 6 for Ga as imp=');
+ T=input('Please enter  the pre-dep temperature in Kelvin as T=');
+ t=input('Please enter the pre-dep time in second as t=');
+Co=input('Plz record solid solubility  in cm^-3 (equal to surface concentration) as Co=');
+T1=input('Please enter  the drive-in temperature in Kelvin as T=');
+t1=input('Please enter the drive-in time in second as t=');
+k=8.6e-5;
+nio=7.3e15; %(cm^-3)
+Ego=1.117;
+alpha=.000473;
+beta=636; 
+ND=1e18; %  Doping concentration  against measured resistivity (cm^-3)
+CFo(1,:,1)=[0 0 12 4.05 0.066 3.44 0 0];
+CFo(1,:,2)=[44.0 4.37 4.4 4.0 3.9 3.66 0 0];
+CFo(1,:,3)=[ 0 0 15.0 4.08 0.21 3.65 0 0];
+CFo(1,:,4)=[ 0 0 0 0 0.037 3.46 0.41 3.46];
+CFo(1,:,5)=[0 0 0 0 1.39 3.41 2480 4.2];
+CFo(1,:,6)=[0 0 0 0 0.37 3.39 28.5 3.92];
+Eg=Ego-((alpha*T^2)/(beta+T)); % eV
+Eg1=Ego-((alpha*T1^2)/(beta+T1)); % eV
+ni=nio*T^(3/2)*exp(-(Eg)/(2*k*T));
+ni1=nio*T^(3/2)*exp(-(Eg1)/(2*k*T1));
+n=(ND/2)+sqrt((ND/2)^2+ni^2); % cm^-3
+n1=(ND/2)+sqrt((ND/2)^2+ni1^2); % cm^-3
+%DEg=(-1)*7.1e-10*sqrt(n/T)
+p=n;
+a=n/ni;
+b=p/ni;
+p1=n1;
+a1=n1/ni1;
+b1=p1/ni1;
+z=0.0:0.02:1;
+for i=1:6
+    if i==imp
+    for j=1:2:7
+    Do(i,j)=CFo(1,j,i); % getting all ground state Do for corresponding impurity
+    Eao(i,j+1)=CFo(1,j+1,i);
+    D(i,j)=Do(i,j)*exp(-(Eao(i,j+1))/(k*T));
+    D1(i,j)=Do(i,j)*exp(-(Eao(i,j+1))/(k*T1));
+    end
+    DD=D(i,5)+a*D(i,3)+a^2*D(i,1)+b*D(i,7); % cm^2/sec
+    DD1=D1(i,5)+a1*D1(i,3)+a1^2*D1(i,1)+b1*D1(i,7); % cm^2/sec
+    %C=Co*exp((-(z.^2))./(4*DD*10^16*t));
+    C=Co*erfc((z)/(2*(DD*10^16*t)^0.5));
+    end
+end
+figure % Plotting results from here
+plot(z,C)
+title('Pre-dep');
+ylabel('Concentration (cm^-3)');
+xlabel('Depth(micro-m)');
+Ls=(DD.*t).^0.5; % dopnats introduced and length scale from here
+QT=(2*Co*Ls)/sqrt(pi);
+disp(['No of dopants introduced is:',num2str(QT),'', 'cm^-2'])
+disp(['Relevant length scale is:',num2str(Ls),'', 'cm'])
+Ls1=(DD1.*t1).^0.5; % dopnats introduced and length scale from here
+if Ls1>Ls
+QT1=(2*Co*Ls1)/sqrt(pi);
+C1=(QT1*exp((-(z.^2))./(4*DD1*10^16*t1)))/(sqrt(pi)*Ls1);
+figure % Plotting results from here
+plot(z,C1)
+title('drive-in');
+ylabel('Concentration (cm^-3)');
+xlabel('Depth(micro-m)');
+end
+    
